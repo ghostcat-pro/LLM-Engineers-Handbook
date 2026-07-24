@@ -5,15 +5,6 @@ import click
 from loguru import logger
 
 from llm_engineering import settings
-from pipelines import (
-    digital_data_etl,
-    end_to_end_data,
-    evaluating,
-    export_artifact_to_json,
-    feature_engineering,
-    generate_datasets,
-    training,
-)
 
 
 @click.command(
@@ -123,6 +114,13 @@ def main(
     run_evaluation: bool = False,
     export_settings: bool = False,
 ) -> None:
+    if not settings.USE_CLOUD:
+        raise click.ClickException(
+            "The legacy ZenML pipeline runner is disabled while USE_CLOUD=false. "
+            "Use the local-first commands under 'poetry run poe local-*' instead. "
+            "Set USE_CLOUD=true only if you intentionally want the original cloud/SageMaker workflows."
+        )
+
     assert (
         run_end_to_end_data
         or run_etl
@@ -143,6 +141,16 @@ def main(
         "enable_cache": not no_cache,
     }
     root_dir = Path(__file__).resolve().parent.parent
+
+    from pipelines import (
+        digital_data_etl,
+        end_to_end_data,
+        evaluating,
+        export_artifact_to_json,
+        feature_engineering,
+        generate_datasets,
+        training,
+    )
 
     if run_end_to_end_data:
         run_args_end_to_end = {}

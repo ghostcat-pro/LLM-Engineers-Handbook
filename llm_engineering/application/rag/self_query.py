@@ -1,10 +1,11 @@
-import opik
 from langchain_openai import ChatOpenAI
 from loguru import logger
 
 from llm_engineering.application import utils
+from llm_engineering.application.llm import get_llm_provider
 from llm_engineering.domain.documents import UserDocument
 from llm_engineering.domain.queries import Query
+from llm_engineering.infrastructure.opik_utils import track
 from llm_engineering.settings import settings
 
 from .base import RAGStep
@@ -12,20 +13,26 @@ from .prompt_templates import SelfQueryTemplate
 
 
 class SelfQuery(RAGStep):
-    @opik.track(name="SelfQuery.generate")
+    @track(name="SelfQuery.generate")
     def generate(self, query: Query) -> Query:
         if self._mock:
             return query
 
         prompt = SelfQueryTemplate().create_template()
-        model = ChatOpenAI(model=settings.OPENAI_MODEL_ID, api_key=settings.OPENAI_API_KEY, temperature=0)
+        if settings.USE_CLOUD:
+            model = ChatOpenAI(model=settings.OPENAI_MODEL_ID, api_key=settings.OPENAI_API_KEY, temperature=0)
+            chain = prompt | model
+            response = chain.invoke({"question": query})
+            user_full_name = response.content.strip("\n ")
+        else:
+            user_full_name = get_llm_provider().generate(
+                prompt.format(question=query.content),
+                temperature=0,
+                max_new_tokens=32,
+            )
+            user_full_name = user_full_name.strip("\n .")
 
-        chain = prompt | model
-
-        response = chain.invoke({"question": query})
-        user_full_name = response.content.strip("\n ")
-
-        if user_full_name == "none":
+        if user_full_name.lower() == "none":
             return query
 
         first_name, last_name = utils.split_user_full_name(user_full_name)

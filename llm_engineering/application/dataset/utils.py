@@ -23,7 +23,10 @@ def create_instruct_train_test_split(
         samples = dataset.samples
         samples_dicts = [sample.model_dump() for sample in samples]
 
-        if len(samples_dicts) > 0:
+        if len(samples_dicts) == 1:
+            train_samples = [InstructDatasetSample(**samples_dicts[0])]
+            test_samples = []
+        elif len(samples_dicts) > 1:
             train_samples_dicts, test_samples_dicts = train_test_split(
                 samples_dicts, test_size=test_size, random_state=random_state
             )
@@ -52,7 +55,10 @@ def create_preference_train_test_split(
         samples = dataset.samples
         samples_dicts = [sample.model_dump() for sample in samples]
 
-        if len(samples_dicts) > 0:
+        if len(samples_dicts) == 1:
+            train_samples = [PreferenceDatasetSample(**samples_dicts[0])]
+            test_samples = []
+        elif len(samples_dicts) > 1:
             train_samples_dicts, test_samples_dicts = train_test_split(
                 samples_dicts, test_size=test_size, random_state=random_state
             )

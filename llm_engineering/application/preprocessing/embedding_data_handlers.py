@@ -14,7 +14,9 @@ from llm_engineering.domain.queries import EmbeddedQuery, Query
 ChunkT = TypeVar("ChunkT", bound=Chunk)
 EmbeddedChunkT = TypeVar("EmbeddedChunkT", bound=EmbeddedChunk)
 
-embedding_model = EmbeddingModelSingleton()
+
+def get_embedding_model() -> EmbeddingModelSingleton:
+    return EmbeddingModelSingleton()
 
 
 class EmbeddingDataHandler(ABC, Generic[ChunkT, EmbeddedChunkT]):
@@ -28,6 +30,7 @@ class EmbeddingDataHandler(ABC, Generic[ChunkT, EmbeddedChunkT]):
 
     def embed_batch(self, data_model: list[ChunkT]) -> list[EmbeddedChunkT]:
         embedding_model_input = [data_model.content for data_model in data_model]
+        embedding_model = get_embedding_model()
         embeddings = embedding_model(embedding_model_input, to_list=True)
 
         embedded_chunk = [
@@ -44,6 +47,7 @@ class EmbeddingDataHandler(ABC, Generic[ChunkT, EmbeddedChunkT]):
 
 class QueryEmbeddingHandler(EmbeddingDataHandler):
     def map_model(self, data_model: Query, embedding: list[float]) -> EmbeddedQuery:
+        embedding_model = get_embedding_model()
         return EmbeddedQuery(
             id=data_model.id,
             author_id=data_model.author_id,
@@ -60,6 +64,7 @@ class QueryEmbeddingHandler(EmbeddingDataHandler):
 
 class PostEmbeddingHandler(EmbeddingDataHandler):
     def map_model(self, data_model: PostChunk, embedding: list[float]) -> EmbeddedPostChunk:
+        embedding_model = get_embedding_model()
         return EmbeddedPostChunk(
             id=data_model.id,
             content=data_model.content,
@@ -78,6 +83,7 @@ class PostEmbeddingHandler(EmbeddingDataHandler):
 
 class ArticleEmbeddingHandler(EmbeddingDataHandler):
     def map_model(self, data_model: ArticleChunk, embedding: list[float]) -> EmbeddedArticleChunk:
+        embedding_model = get_embedding_model()
         return EmbeddedArticleChunk(
             id=data_model.id,
             content=data_model.content,
@@ -97,6 +103,7 @@ class ArticleEmbeddingHandler(EmbeddingDataHandler):
 
 class RepositoryEmbeddingHandler(EmbeddingDataHandler):
     def map_model(self, data_model: RepositoryChunk, embedding: list[float]) -> EmbeddedRepositoryChunk:
+        embedding_model = get_embedding_model()
         return EmbeddedRepositoryChunk(
             id=data_model.id,
             content=data_model.content,

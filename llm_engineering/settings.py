@@ -1,3 +1,5 @@
+import os
+
 from loguru import logger
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from zenml.client import Client
@@ -5,7 +7,11 @@ from zenml.exceptions import EntityExistsError
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=os.getenv("ENV_FILE", ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # --- Required settings even when working locally. ---
 
@@ -63,10 +69,43 @@ class Settings(BaseSettings):
     TEXT_EMBEDDING_MODEL_ID: str = "sentence-transformers/all-MiniLM-L6-v2"
     RERANKING_CROSS_ENCODER_MODEL_ID: str = "cross-encoder/ms-marco-MiniLM-L-4-v2"
     RAG_MODEL_DEVICE: str = "cpu"
+    RAG_USE_QUERY_EXPANSION: bool = False
+    RAG_USE_SELF_QUERY: bool = False
+    RAG_USE_RERANKING: bool = True
 
     # LinkedIn Credentials
     LINKEDIN_USERNAME: str | None = None
     LINKEDIN_PASSWORD: str | None = None
+
+    # Local-first runtime
+    USE_CLOUD: bool = False
+    USE_ZENML_SECRET_STORE: bool = False
+    LLM_PROVIDER: str = "ollama"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    LOCAL_CHAT_MODEL: str = "qwen2.5:7b-instruct"
+    LOCAL_MODEL_PATH: str | None = None
+    LOCAL_LLM_TIMEOUT_SECONDS: int = 120
+    LOCAL_LLM_MAX_RETRIES: int = 2
+    USE_OPIK: bool = False
+    USE_HUGGINGFACE_HUB: bool = False
+    USE_MLFLOW: bool = True
+    MLFLOW_TRACKING_URI: str = "file:data/mlruns"
+    MLFLOW_EXPERIMENT_NAME: str = "local-llm-twin"
+
+    USE_LOCAL_MODELS: bool = True
+
+    # Backwards-compatible property names for earlier local experiments.
+    @property
+    def use_cloud(self) -> bool:
+        return self.USE_CLOUD
+
+    @property
+    def use_local_models(self) -> bool:
+        return self.USE_LOCAL_MODELS
+
+    @property
+    def local_model_path(self) -> str | None:
+        return self.LOCAL_MODEL_PATH
 
     @property
     def OPENAI_MAX_TOKEN_WINDOW(self) -> int:
@@ -90,12 +129,15 @@ class Settings(BaseSettings):
             Settings: The initialized settings object.
         """
 
+        if os.getenv("USE_ZENML_SECRET_STORE", "false").lower() != "true":
+            return Settings()
+
         try:
             logger.info("Loading settings from the ZenML secret store.")
 
             settings_secrets = Client().get_secret("settings")
             settings = Settings(**settings_secrets.secret_values)
-        except (RuntimeError, KeyError):
+        except (RuntimeError, KeyError, OSError):
             logger.warning(
                 "Failed to load settings from the ZenML secret store. Defaulting to loading the settings from the '.env' file."
             )

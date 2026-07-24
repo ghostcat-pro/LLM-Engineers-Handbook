@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
+import torch
 from loguru import logger
 from numpy.typing import NDArray
 from sentence_transformers.SentenceTransformer import SentenceTransformer
@@ -12,6 +13,14 @@ from transformers import AutoTokenizer
 from llm_engineering.settings import settings
 
 from .base import SingletonMeta
+
+
+def _resolve_device(device: str) -> str:
+    if device == "cuda" and not torch.cuda.is_available():
+        logger.warning("CUDA was requested, but it is not visible to this Python process. Falling back to CPU.")
+        return "cpu"
+
+    return device
 
 
 class EmbeddingModelSingleton(metaclass=SingletonMeta):
@@ -26,7 +35,7 @@ class EmbeddingModelSingleton(metaclass=SingletonMeta):
         cache_dir: Optional[Path] = None,
     ) -> None:
         self._model_id = model_id
-        self._device = device
+        self._device = _resolve_device(device)
 
         self._model = SentenceTransformer(
             self._model_id,
@@ -119,7 +128,7 @@ class CrossEncoderModelSingleton(metaclass=SingletonMeta):
         """
 
         self._model_id = model_id
-        self._device = device
+        self._device = _resolve_device(device)
 
         self._model = CrossEncoder(
             model_name=self._model_id,

@@ -2,6 +2,7 @@ services:
   mongo:
     image: mongo:latest
     container_name: "llm_engineering_mongo"
+    runtime: runc
     logging:
       options:
         max-size: 1g
@@ -19,6 +20,7 @@ services:
   qdrant:
     image: qdrant/qdrant:latest
     container_name: "llm_engineering_qdrant"
+    runtime: runc
     ports:
       - 6333:6333
       - 6334:6334

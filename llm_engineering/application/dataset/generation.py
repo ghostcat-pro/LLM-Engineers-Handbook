@@ -10,6 +10,7 @@ from loguru import logger
 
 from llm_engineering import domain
 from llm_engineering.application import utils
+from llm_engineering.application.llm import get_llm_provider
 from llm_engineering.domain.cleaned_documents import CleanedDocument
 from llm_engineering.domain.dataset import DatasetType, TrainTestSplit
 from llm_engineering.domain.prompt import GenerateDatasetSamplesPrompt, Prompt
@@ -109,9 +110,11 @@ Provide your response in JSON format.
 
             return messages
 
+        parser = ListPydanticOutputParser(pydantic_object=cls._get_dataset_sample_type())
+
         if mock:
             llm = FakeListLLM(responses=[constants.get_mocked_response(cls.dataset_type)])
-        else:
+        elif settings.USE_CLOUD:
             assert settings.OPENAI_API_KEY is not None, "OpenAI API key must be set to generate datasets"
 
             llm = ChatOpenAI(
@@ -120,7 +123,8 @@ Provide your response in JSON format.
                 max_tokens=2000 if cls.dataset_type == DatasetType.PREFERENCE else 1200,
                 temperature=0.7,
             )
-        parser = ListPydanticOutputParser(pydantic_object=cls._get_dataset_sample_type())
+        else:
+            return cls._generate_local(prompts=prompts, parser=parser, test_size=test_size)
 
         chain = llm | parser
 
@@ -148,6 +152,46 @@ Provide your response in JSON format.
         processed_datasets = cls.post_process_datasets(datasets, test_size=test_size)
 
         return processed_datasets
+
+    @classmethod
+    def _generate_local(
+        cls,
+        prompts: dict[DataCategory, list[GenerateDatasetSamplesPrompt]],
+        parser: ListPydanticOutputParser,
+        test_size: float,
+    ) -> TrainTestSplit:
+        provider = get_llm_provider()
+        datasets = {}
+        max_new_tokens = 2200 if cls.dataset_type == DatasetType.PREFERENCE else 1600
+
+        for category, category_prompts in prompts.items():
+            flattened_dataset_samples = []
+            for prompt in category_prompts:
+                prompt_messages = [
+                    f"System:\n{cls.get_system_prompt().content}",
+                    f"User:\n{prompt.content}",
+                ]
+                prompt_text = "\n\n".join(prompt_messages)
+
+                try:
+                    generated_json = provider.generate_json(
+                        prompt_text,
+                        temperature=0.2,
+                        max_new_tokens=max_new_tokens,
+                        retries=settings.LOCAL_LLM_MAX_RETRIES,
+                    )
+                    dataset_samples = parser._parse_obj(generated_json)
+                    flattened_dataset_samples.extend(dataset_samples)
+                except Exception:
+                    logger.exception(f"Failed to generate a valid local dataset sample for category '{category}'.")
+
+            dataset = domain.dataset.build_dataset(
+                dataset_type=cls.dataset_type, category=category, samples=flattened_dataset_samples
+            )
+            datasets[category] = dataset
+            logger.info(f"Generated {len(dataset.samples)} local samples for category '{category}'.")
+
+        return cls.post_process_datasets(datasets, test_size=test_size)
 
     @classmethod
     def _get_dataset_sample_type(

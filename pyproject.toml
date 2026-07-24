@@ -42,6 +42,7 @@ langchain-community = "^0.2.11"
 fastapi = ">=0.100,<=0.110"
 uvicorn = "^0.30.6"
 opik = "^0.2.2"
+accelerate = "^1.8.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -94,9 +95,24 @@ call-rag-retrieval-module = "poetry run python -m tools.rag"
 
 run-inference-ml-service = "poetry run uvicorn tools.ml_service:app --host 0.0.0.0 --port 8000 --reload"
 call-inference-ml-service = "curl -X POST 'http://127.0.0.1:8000/rag' -H 'Content-Type: application/json' -d '{\"query\": \"My name is Paul Iusztin. Could you draft a LinkedIn post discussing RAG systems? I am particularly interested in how RAG works and how it is integrated with vector DBs and LLMs.\"}'"
+local-run-api = { cmd = "poetry run uvicorn tools.ml_service:app --host 0.0.0.0 --port 8000 --reload", env = { ENV_FILE = ".env.local" } }
+local-rag-test = "curl -X POST 'http://127.0.0.1:8000/rag' -H 'Content-Type: application/json' -d '{\"query\": \"Draft a short post about RAG systems and vector databases.\"}'"
 
 # Infrastructure
 ## Local infrastructure
+local-check-hardware = { cmd = "poetry run python -m tools.local check-hardware", env = { ENV_FILE = ".env.local" } }
+local-validate = { cmd = "poetry run python -m tools.local validate", env = { ENV_FILE = ".env.local" } }
+local-healthcheck = { cmd = "poetry run python -m tools.local healthcheck", env = { ENV_FILE = ".env.local" } }
+local-import-data = { cmd = "poetry run python -m tools.local import-data", env = { ENV_FILE = ".env.local" } }
+local-build-vector-db = { cmd = "poetry run python -m tools.local build-vector-db", env = { ENV_FILE = ".env.local" } }
+local-generate-instruct-dataset = { cmd = "poetry run python -m tools.local generate-dataset --dataset-type instruction", env = { ENV_FILE = ".env.local" } }
+local-generate-preference-dataset = { cmd = "poetry run python -m tools.local generate-dataset --dataset-type preference", env = { ENV_FILE = ".env.local" } }
+local-evaluate-rag = { cmd = "poetry run python -m tools.local evaluate-rag", env = { ENV_FILE = ".env.local" } }
+local-training-check = { cmd = "poetry run python -m tools.local training-check", env = { ENV_FILE = ".env.local" } }
+local-smoke-test = { cmd = "poetry run python -m tools.local smoke-test", env = { ENV_FILE = ".env.local" } }
+local-smoke-test-full = { cmd = "poetry run python -m tools.local smoke-test --full", env = { ENV_FILE = ".env.local" } }
+local-stack-up = "docker compose up -d"
+local-stack-down = "docker compose stop"
 local-docker-infrastructure-up = "docker compose up -d"
 local-docker-infrastructure-down = "docker compose stop"
 local-zenml-server-down = "poetry run zenml logout --local"

@@ -1,4 +1,6 @@
 import os
+from collections.abc import Callable
+from typing import Any
 
 import opik
 from loguru import logger
@@ -7,7 +9,21 @@ from opik.configurator.configure import OpikConfigurator
 from llm_engineering import settings
 
 
+def track(func: Callable | None = None, **kwargs: Any) -> Callable:
+    if settings.USE_OPIK:
+        return opik.track(func, **kwargs) if func is not None else opik.track(**kwargs)
+
+    def decorator(inner_func: Callable) -> Callable:
+        return inner_func
+
+    return decorator(func) if func is not None else decorator
+
+
 def configure_opik() -> None:
+    if not settings.USE_OPIK:
+        logger.info("Opik is disabled.")
+        return
+
     if settings.COMET_API_KEY and settings.COMET_PROJECT:
         try:
             client = OpikConfigurator(api_key=settings.COMET_API_KEY)

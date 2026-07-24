@@ -11,6 +11,10 @@ def push_to_huggingface(
     dataset: Annotated[InstructTrainTestSplit | PreferenceTrainTestSplit, "dataset_split"],
     dataset_id: Annotated[str, "dataset_id"],
 ) -> None:
+    if not settings.USE_HUGGINGFACE_HUB:
+        logger.warning("Hugging Face Hub uploads are disabled. Skipping dataset push.")
+        return
+
     assert dataset_id is not None, "Dataset id must be provided for pushing to Huggingface"
     assert (
         settings.HUGGINGFACE_ACCESS_TOKEN is not None
