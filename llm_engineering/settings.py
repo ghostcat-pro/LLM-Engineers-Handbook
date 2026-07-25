@@ -94,6 +94,20 @@ class Settings(BaseSettings):
 
     USE_LOCAL_MODELS: bool = True
 
+    # Local training defaults for RTX 3060 12GB. These are intentionally conservative.
+    LOCAL_TRAINING_BASE_MODEL: str = "models/mistral-7b"
+    LOCAL_TRAINING_OUTPUT_DIR: str = "data/training/runs/mistral-7b-local-qlora"
+    LOCAL_TRAINING_DATA_DIR: str = "data/training/datasets"
+    LOCAL_TRAINING_MAX_SEQ_LENGTH: int = 1024
+    LOCAL_TRAINING_LOAD_IN_4BIT: bool = True
+    LOCAL_TRAINING_LORA_RANK: int = 8
+    LOCAL_TRAINING_LORA_ALPHA: int = 16
+    LOCAL_TRAINING_LORA_DROPOUT: float = 0.05
+    LOCAL_TRAINING_BATCH_SIZE: int = 1
+    LOCAL_TRAINING_GRADIENT_ACCUMULATION_STEPS: int = 16
+    LOCAL_TRAINING_LEARNING_RATE: float = 2e-4
+    LOCAL_TRAINING_NUM_EPOCHS: int = 1
+
     # Backwards-compatible property names for earlier local experiments.
     @property
     def use_cloud(self) -> bool:

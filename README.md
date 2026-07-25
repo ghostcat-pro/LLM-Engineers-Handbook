@@ -1,6 +1,6 @@
 <div align="center">
-  <h1>👷 LLM Engineer's Handbook</h1>
-  <p class="tagline">Official repository of the <a href="https://www.amazon.com/LLM-Engineers-Handbook-engineering-production/dp/1836200072/">LLM Engineer's Handbook</a> by <a href="https://github.com/iusztinpaul">Paul Iusztin</a> and <a href="https://github.com/mlabonne">Maxime Labonne</a></p>
+  <h1>LLM Engineer's Handbook - Local-First LLM Twin Experiment</h1>
+  <p class="tagline">A local-first adaptation of the <a href="https://www.amazon.com/LLM-Engineers-Handbook-engineering-production/dp/1836200072/">LLM Engineer's Handbook</a> / LLM Twin project by <a href="https://github.com/iusztinpaul">Paul Iusztin</a> and <a href="https://github.com/mlabonne">Maxime Labonne</a></p>
 </div>
 </br>
 
@@ -16,7 +16,9 @@
 
 ## 🌟 Features
 
-The goal of this book is to create your own end-to-end LLM-based system using best practices:
+This repository started from the codebase that accompanies the book **LLM Engineer's Handbook**. The main intervention in this working copy is a **local-first conversion** by **Francisco Sales Pinto**, as a first experiment with adapting the LLM Twin project to run on local resources. The original cloud-oriented implementation has been adapted so the core experiment can run without AWS, Google services, OpenAI APIs, Hugging Face Hub uploads, Comet/Opik cloud logging, or managed cloud databases.
+
+The original book project demonstrates an end-to-end LLM-based system with:
 
 - 📝 Data collection & generation
 - 🔄 LLM training pipeline
@@ -25,10 +27,50 @@ The goal of this book is to create your own end-to-end LLM-based system using be
 - 🔍 Comprehensive monitoring
 - 🧪 Testing and evaluation framework
 
-You can download and use the final trained model on [Hugging Face](https://huggingface.co/mlabonne/TwinLlama-3.1-8B-DPO).
+The local-first adaptation implemented here adds:
+
+- Docker Compose MongoDB and Qdrant for local storage and vector search.
+- Ollama for local generation, currently using `qwen2.5:7b-instruct`.
+- Local embeddings with `sentence-transformers/all-MiniLM-L6-v2`.
+- Local RAG over the bundled data and over user-provided thesis/article PDFs.
+- A CLI question-answering flow over local PDFs with source chunks.
+- Local dataset generation for instruction/preference/thesis SFT samples.
+- Local MLflow file tracking under `data/mlruns`.
+- Guardrails so cloud-oriented commands fail fast when `USE_CLOUD=false`.
+- RTX 3060 12GB-oriented local QLoRA training preparation.
 
 > [!IMPORTANT]
-> The code in this GitHub repository is actively maintained and may contain updates not reflected in the book. **Always refer to this repository for the latest version of the code.**
+> This working copy intentionally diverges from the book's managed-cloud implementation. The original cloud-oriented code paths are still present for reference, but the active experiment is the local-first path documented in [LOCAL_FIRST.md](/home/fspinto/projects/LLM-Engineers-Handbook/LOCAL_FIRST.md), [LOCAL_SOURCES.md](/home/fspinto/projects/LLM-Engineers-Handbook/LOCAL_SOURCES.md), [LOCAL_TRAINING.md](/home/fspinto/projects/LLM-Engineers-Handbook/LOCAL_TRAINING.md), and [dummy.md](/home/fspinto/projects/LLM-Engineers-Handbook/dummy.md).
+
+## Attribution
+
+The base project and architecture come from the **LLM Engineer's Handbook** book repository by Paul Iusztin and Maxime Labonne. The local-first modifications in this working copy were done by **Francisco Sales Pinto** as a first experiment focused on replacing managed cloud services with local resources.
+
+## Local-First Status
+
+The local path currently supports:
+
+- local service validation
+- MongoDB and Qdrant startup through Docker Compose
+- Ollama health checks and local generation
+- local vector DB construction
+- local RAG smoke tests
+- local PDF import into a `local_sources` Qdrant collection
+- interactive Q&A over the thesis/articles
+- thesis-weighted synthetic SFT dataset generation
+- local SFT dry runs and a small QLoRA training path
+
+The thesis/source RAG has been tested with the thesis PDF:
+
+```text
+data/local_sources/Predicting_Managerial_Adjustments_Francisco_Pinto.pdf
+```
+
+and supporting article PDFs under:
+
+```text
+data/local_sources/
+```
 
 ## 🔗 Dependencies
 
@@ -42,25 +84,23 @@ To install and run the project locally, you need the following dependencies.
 | Python | 3.11 | Runtime environment | [Download](https://www.python.org/downloads/) |
 | Poetry | >= 1.8.3 and < 2.0 | Package management | [Install Guide](https://python-poetry.org/docs/#installation) |
 | Docker | ≥27.1.1 | Containerization | [Install Guide](https://docs.docker.com/engine/install/) |
-| AWS CLI | ≥2.15.42 | Cloud management | [Install Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) |
+| Ollama | current local install | Local chat model runtime | [Install Guide](https://ollama.com/) |
+| NVIDIA driver / CUDA-capable PyTorch | optional but recommended | Local GPU training and faster local models | [PyTorch Install Guide](https://pytorch.org/get-started/locally/) |
 | Git | ≥2.44.0 | Version control | [Download](https://git-scm.com/downloads) |
 
-### Cloud services
+### Local services
 
-The code also uses and depends on the following cloud services. For now, you don't have to do anything. We will guide you in the installation and deployment sections on how to use them:
+The local-first profile uses the following local services:
 
 | Service | Purpose |
 |---------|---------|
-| [HuggingFace](https://huggingface.com/) | Model registry |
-| [Comet ML](https://www.comet.com/site/products/opik/?utm_source=llm_handbook&utm_medium=github&utm_campaign=opik) | Experiment tracker |
-| [Opik](https://www.comet.com/site/products/opik/?utm_source=llm_handbook&utm_medium=github&utm_campaign=opik) | Prompt monitoring |
-| [ZenML](https://www.zenml.io/) | Orchestrator and artifacts layer |
-| [AWS](https://aws.amazon.com/) | Compute and storage |
-| [MongoDB](https://www.mongodb.com/) | NoSQL database |
-| [Qdrant](https://qdrant.tech/) | Vector database |
-| [GitHub Actions](https://github.com/features/actions) | CI/CD pipeline |
+| [Ollama](https://ollama.com/) | Local LLM server |
+| [MongoDB](https://www.mongodb.com/) | Local NoSQL database through Docker Compose |
+| [Qdrant](https://qdrant.tech/) | Local vector database through Docker Compose |
+| [MLflow](https://mlflow.org/) | Local file-based experiment/evaluation tracking |
+| [Sentence Transformers](https://www.sbert.net/) | Local embedding model |
 
-In the [LLM Engineer's Handbook](https://www.amazon.com/LLM-Engineers-Handbook-engineering-production/dp/1836200072/), Chapter 2 will walk you through each tool. Chapters 10 and 11 provide step-by-step guides on how to set up everything you need.
+The original book version also uses Hugging Face Hub, Comet/Opik, ZenML Cloud, AWS SageMaker, serverless MongoDB/Qdrant, and GitHub Actions. Those cloud services are not required for this local experiment and are disabled by default in `.env.local`.
 
 ## 🗂️ Project Structure
 
@@ -85,23 +125,24 @@ Here is the directory overview:
 │   ├── data_warehouse.py
 ```
 
-`llm_engineering/`  is the main Python package implementing LLM and RAG functionality. It follows Domain-Driven Design (DDD) principles:
+`llm_engineering/` is the main Python package implementing LLM and RAG functionality. It follows Domain-Driven Design (DDD) principles:
 
 - `domain/`: Core business entities and structures
 - `application/`: Business logic, crawlers, and RAG implementation
 - `model/`: LLM training and inference
-- `infrastructure/`: External service integrations (AWS, Qdrant, MongoDB, FastAPI)
+- `infrastructure/`: External service integrations for local and legacy cloud paths, including Qdrant, MongoDB, FastAPI, and AWS-related code retained from the book.
 
 The code logic and imports flow as follows: `infrastructure` → `model` → `application` → `domain`
 
-`pipelines/`: Contains the ZenML ML pipelines, which serve as the entry point for all the ML pipelines. Coordinates the data processing and model training stages of the ML lifecycle.
+`pipelines/`: Contains the original ZenML ML pipelines from the book. In the local-first profile, most day-to-day work is driven through `tools/local.py` and the `local-*` Poe tasks instead.
 
 `steps/`: Contains individual ZenML steps, which are reusable components for building and customizing ZenML pipelines. Steps perform specific tasks (e.g., data loading, preprocessing) and can be combined within the ML pipelines.
 
 `tests/`: Covers a few sample tests used as examples within the CI pipeline.
 
-`tools/`: Utility scripts used to call the ZenML pipelines and inference code:
+`tools/`: Utility scripts used to call local workflows, legacy ZenML pipelines, and inference code:
 - `run.py`: Entry point script to run ZenML pipelines.
+- `local.py`: Local-first CLI for validation, RAG, thesis/source ingestion, dataset generation, evaluation, and local training.
 - `ml_service.py`: Starts the REST API inference server.
 - `rag.py`: Demonstrates usage of the RAG retrieval module.
 - `data_warehouse.py`: Used to export or import data from the MongoDB data warehouse through JSON files.
@@ -114,6 +155,69 @@ The code logic and imports flow as follows: `infrastructure` → `model` → `ap
 
 > [!NOTE]
 > If you are experiencing issues while installing and running the repository, consider checking the [Issues](https://github.com/PacktPublishing/LLM-Engineers-Handbook/issues) GitHub section for other people who solved similar problems or directly asking us for help.
+
+## Local-First Quickstart
+
+Use this path for the current local experiment.
+
+Start Ollama in one terminal:
+
+```bash
+ollama serve
+```
+
+In another terminal, start the local databases and validate the local profile:
+
+```bash
+cd /home/fspinto/projects/LLM-Engineers-Handbook
+poetry install --without aws
+poetry run poe local-stack-up
+poetry run poe local-validate
+poetry run poe local-healthcheck
+```
+
+Build the bundled-data vector DB and run a smoke test:
+
+```bash
+poetry run poe local-import-data
+poetry run poe local-build-vector-db
+poetry run poe local-smoke-test
+```
+
+Ask questions over local thesis/article PDFs:
+
+```bash
+poetry run poe local-import-sources
+poetry run poe local-ask-sources
+```
+
+One-off question with an optional retrieval hint:
+
+```bash
+ENV_FILE=.env.local poetry run python -m tools.local ask-sources \
+  --question "How does the thesis define the action space?" \
+  --retrieval-query "RQ1.1 taxonomy manual adjustments retail workforce scheduling"
+```
+
+Generate a thesis-weighted local SFT dataset:
+
+```bash
+poetry run poe local-generate-thesis-dataset
+```
+
+The default local outputs are intentionally ignored by git:
+
+```text
+data/generated/
+data/evaluations/
+data/mlruns/
+data/training/
+data/local_sources/
+data/local_sources_manifest.json
+models/
+```
+
+For the full command-by-command runbook, see [dummy.md](/home/fspinto/projects/LLM-Engineers-Handbook/dummy.md).
 
 ### 1. Clone the Repository
 
@@ -205,7 +309,7 @@ poetry shell
 2. Run project commands using Poe the Poet:
 
 ```bash
-poetry poe ...
+poetry run poe ...
 ```
 
 <details>
@@ -221,7 +325,7 @@ If you're experiencing issues with `poethepoet`, you can still run the project c
 #### Example:
 Instead of:
 ```bash
-poetry poe local-infrastructure-up
+poetry run poe local-stack-up
 ```
 Use the direct command from pyproject.toml:
 ```bash
@@ -230,19 +334,46 @@ poetry run <actual-command-from-pyproject-toml>
 Note: All project commands are defined in the [tool.poe.tasks] section of pyproject.toml
 </details>
 
-Now, let's configure our local project with all the necessary credentials and tokens to run the code locally.
+Now, configure the project for the local-first profile.
 
 ### 5. Local Development Setup
 
-After you have installed all the dependencies, you must create and fill a `.env` file with your credentials to appropriately interact with other services and run the project. Setting your sensitive credentials in a `.env` file is a good security practice, as this file won't be committed to GitHub or shared with anyone else. 
-
-1. First, copy our example by running the following:
+After you have installed all the dependencies, create a `.env.local` file from the local example:
 
 ```bash
-cp .env.example .env # The file must be at your repository's root!
+cp .env.local.example .env.local
 ```
 
-2. Now, let's understand how to fill in all the essential variables within the `.env` file to get you started. The following are the mandatory settings we must complete when working locally:
+The important local-first settings are:
+
+```env
+USE_CLOUD=false
+USE_ZENML_SECRET_STORE=false
+USE_LOCAL_MODELS=true
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+LOCAL_CHAT_MODEL=qwen2.5:7b-instruct
+USE_OPIK=false
+USE_HUGGINGFACE_HUB=false
+USE_MLFLOW=true
+MLFLOW_TRACKING_URI=file:data/mlruns
+```
+
+Most local Poe tasks already set `ENV_FILE=.env.local` for you. For direct commands, prefix the command with `ENV_FILE=.env.local`, for example:
+
+```bash
+ENV_FILE=.env.local poetry run python -m tools.local ask-sources \
+  --question "What is the thesis about?"
+```
+
+This does not write to `.env.local`; it only tells the process which settings file to read.
+
+#### Original cloud credentials
+
+The original book workflow uses OpenAI, Hugging Face, Comet/Opik, ZenML, and AWS credentials. Those are not needed for the local-first profile and should remain disabled unless you intentionally return to the original cloud workflow.
+
+<details>
+<summary>Legacy cloud credential notes from the original book workflow</summary>
 
 #### OpenAI
 
@@ -274,9 +405,11 @@ COMET_API_KEY=your_api_key_here
 
 → Check out this [tutorial](https://www.comet.com/docs/opik/?utm_source=llm_handbook&utm_medium=github&utm_campaign=opik) to learn how to get started with Opik. You can also access Opik's dashboard using 🔗[this link](https://www.comet.com/opik?utm_source=llm_handbook&utm_medium=github&utm_content=opik).
 
+</details>
+
 ### 6. Deployment Setup
 
-When deploying the project to the cloud, we must set additional settings for Mongo, Qdrant, and AWS. If you are just working locally, the default values of these env vars will work out of the box. Detailed deployment instructions are available in Chapter 11 of the [LLM Engineer's Handbook](https://www.amazon.com/LLM-Engineers-Handbook-engineering-production/dp/1836200072/).
+The following deployment setup belongs to the original cloud workflow from the book. It is kept for reference, but it is not required for the local-first experiment. Detailed deployment instructions are available in Chapter 11 of the [LLM Engineer's Handbook](https://www.amazon.com/LLM-Engineers-Handbook-engineering-production/dp/1836200072/).
 
 #### MongoDB
 
@@ -325,38 +458,46 @@ cat ~/.aws/credentials
 
 ### Local infrastructure (for testing and development)
 
-When running the project locally, we host a MongoDB and Qdrant database using Docker. Also, a testing ZenML server is made available through their Python package.
+When running the local-first profile, MongoDB and Qdrant are hosted with Docker Compose. Ollama runs separately on the host machine.
 
 > [!WARNING]
 > You need Docker installed (>= v27.1.1)
 
-For ease of use, you can start the whole local development infrastructure with the following command:
+Start MongoDB and Qdrant:
 ```bash
-poetry poe local-infrastructure-up
+poetry run poe local-stack-up
 ```
 
-Also, you can stop the ZenML server and all the Docker containers using the following command:
+Stop MongoDB and Qdrant:
 ```bash
-poetry poe local-infrastructure-down
+poetry run poe local-stack-down
 ```
 
-> [!WARNING]  
-> When running on MacOS, before starting the server, export the following environment variable:
-> `export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES`
-> Otherwise, the connection between the local server and pipeline will break. 🔗 More details in [this issue](https://github.com/zenml-io/zenml/issues/2369).
-> This is done by default when using Poe the Poet.
+Start Ollama in a separate terminal:
+
+```bash
+ollama serve
+```
 
 Start the inference real-time RESTful API:
 ```bash
-poetry poe run-inference-ml-service
+poetry run poe local-run-api
+```
+
+Ask questions over the local thesis/article corpus:
+
+```bash
+poetry run poe local-ask-sources
 ```
 
 > [!IMPORTANT]
-> The LLM microservice, called by the RESTful API, will work only after deploying the LLM to AWS SageMaker.
+> The local-first API and CLI use Ollama and local Qdrant. They do not require an AWS SageMaker endpoint.
 
 #### ZenML
 
-Dashboard URL: `localhost:8237`
+ZenML is part of the original book architecture and remains in the repository for reference. The current local-first path does not require running a ZenML server.
+
+Dashboard URL for legacy/local ZenML experiments: `localhost:8237`
 
 Default credentials:
   - `username`: default
@@ -387,11 +528,11 @@ Default credentials:
 You can search your MongoDB collections using your **IDEs MongoDB plugin** (which you have to install separately), where you have to use the database URI to connect to the MongoDB database hosted within the Docker container: `mongodb://llm_engineering:llm_engineering@127.0.0.1:27017`
 
 > [!IMPORTANT]
-> Everything related to training or running the LLMs (e.g., training, evaluation, inference) can only be run if you set up AWS SageMaker, as explained in the next section on cloud infrastructure.
+> In this local-first adaptation, RAG, inference, evaluation, dataset generation, and the guarded local SFT path run locally. AWS SageMaker is only needed if you intentionally return to the original cloud workflow from the book.
 
-### Cloud infrastructure (for production)
+### Cloud infrastructure (original book reference)
 
-Here we will quickly present how to deploy the project to AWS and other serverless services. We won't go into the details (as everything is presented in the book) but only point out the main steps you have to go through.
+This section summarizes the original book's AWS/serverless deployment path. It is not required for Francisco Sales Pinto's local-first experiment.
 
 First, reinstall your Python dependencies with the AWS group:
 ```bash
@@ -472,13 +613,15 @@ You can visualize the results on their self-hosted dashboards if you create a Co
 - [Comet ML (for experiment tracking)](https://www.comet.com/?utm_source=llm_handbook&utm_medium=github&utm_campaign=opik)
 - [Opik (for prompt monitoring)](https://www.comet.com/opik?utm_source=llm_handbook&utm_medium=github&utm_campaign=opik)
 
-### 💰 Running the Project Costs
+### Running the Project Costs
 
-We will mostly stick to free tiers for all the services except for AWS and OpenAI's API, which are both pay-as-you-go services. The cost of running the project once, with our default values, will be roughly ~$25 (most of it comes from using AWS SageMaker for training and inference).
+For the local-first experiment, the project runs on local hardware and local Docker/Ollama services. There are no managed cloud charges unless you intentionally enable the original cloud workflow. The original book path uses AWS and OpenAI API calls and may incur pay-as-you-go costs.
 
-## ⚡ Pipelines
+## Pipelines
 
-All the ML pipelines will be orchestrated behind the scenes by [ZenML](https://www.zenml.io/). A few exceptions exist when running utility scrips, such as exporting or importing from the data warehouse.
+The following pipeline section describes the original book workflow. For the local-first experiment, prefer the `local-*` Poe tasks and the detailed runbook in [dummy.md](/home/fspinto/projects/LLM-Engineers-Handbook/dummy.md).
+
+In the original book workflow, the ML pipelines are orchestrated behind the scenes by [ZenML](https://www.zenml.io/). A few exceptions exist when running utility scripts, such as exporting or importing from the data warehouse.
 
 The ZenML pipelines are the entry point for most processes throughout this project. They are under the `pipelines/` folder. Thus, when you want to understand or debug a workflow, starting with the ZenML pipeline is the best approach.
 

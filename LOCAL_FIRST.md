@@ -59,6 +59,12 @@ The smoke test checks local services, Ollama generation, Qdrant retrieval, and t
 poetry run poe local-smoke-test-full
 ```
 
+Run fast local unit tests without live services:
+
+```bash
+poetry run poe local-test
+```
+
 Import bundled data and build vectors:
 
 ```bash
@@ -119,12 +125,49 @@ mlflow ui --backend-store-uri data/mlruns
 Check local fine-tuning readiness:
 
 ```bash
-ENV_FILE=.env.local poetry run python -m tools.local training-check
+poetry run poe local-training-check
+```
+
+Inspect the conservative RTX 3060 profile:
+
+```bash
+poetry run poe local-training-plan
+```
+
+Prepare generated datasets for local training:
+
+```bash
+poetry run poe local-prepare-training-data
+```
+
+Validate the local trainer without loading the model:
+
+```bash
+poetry run poe local-train-dry-run
 ```
 
 For an RTX 3060 12GB, start with QLoRA, sequence length 1024, batch size 1, gradient accumulation 8-16, and LoRA rank 8 or 16.
 
-The current local RAG stack does not require the training packages. Fine-tuning requires a separate dependency pass for `trl`, `peft`, `bitsandbytes`, and `unsloth`.
+The local SFT path uses `trl`, `peft`, and `bitsandbytes`. `unsloth` is still optional and is not required by the guarded local trainer.
+
+See [LOCAL_TRAINING.md](/home/fspinto/projects/LLM-Engineers-Handbook/LOCAL_TRAINING.md) for the local training preparation notes.
+
+## Thesis And Local Sources
+
+Place thesis/articles under:
+
+```text
+data/local_sources/
+```
+
+Then import and test retrieval:
+
+```bash
+poetry run poe local-import-sources
+poetry run poe local-search-sources
+```
+
+See [LOCAL_SOURCES.md](/home/fspinto/projects/LLM-Engineers-Handbook/LOCAL_SOURCES.md) for the thesis/source workflow.
 
 ## Local-First Guarantees
 

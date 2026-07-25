@@ -2,36 +2,35 @@
 
 [[package]]
 name = "accelerate"
-version = "1.8.1"
+version = "0.33.0"
 description = "Accelerate"
 optional = false
-python-versions = ">=3.9.0"
+python-versions = ">=3.8.0"
 groups = ["main"]
 files = [
-    {file = "accelerate-1.8.1-py3-none-any.whl", hash = "sha256:c47b8994498875a2b1286e945bd4d20e476956056c7941d512334f4eb44ff991"},
-    {file = "accelerate-1.8.1.tar.gz", hash = "sha256:f60df931671bc4e75077b852990469d4991ce8bd3a58e72375c3c95132034db9"},
+    {file = "accelerate-0.33.0-py3-none-any.whl", hash = "sha256:0a7f33d60ba09afabd028d4f0856dd19c5a734b7a596d637d9dd6e3d0eadbaf3"},
+    {file = "accelerate-0.33.0.tar.gz", hash = "sha256:11ba481ed6ea09191775df55ce464aeeba67a024bd0261a44b77b30fb439e26a"},
 ]
 
 [package.dependencies]
-huggingface_hub = ">=0.21.0"
-numpy = ">=1.17,<3.0.0"
+huggingface-hub = ">=0.21.0"
+numpy = ">=1.17,<2.0.0"
 packaging = ">=20.0"
 psutil = "*"
 pyyaml = "*"
-safetensors = ">=0.4.3"
-torch = ">=2.0.0"
+safetensors = ">=0.3.1"
+torch = ">=1.10.0"
 
 [package.extras]
-deepspeed = ["deepspeed"]
-dev = ["bitsandbytes", "black (>=23.1,<24.0)", "datasets", "diffusers", "evaluate", "hf-doc-builder (>=0.3.0)", "parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-order", "pytest-subtests", "pytest-xdist", "rich", "ruff (>=0.11.2,<0.12.0)", "scikit-learn", "scipy", "timm", "torchdata (>=0.8.0)", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
-quality = ["black (>=23.1,<24.0)", "hf-doc-builder (>=0.3.0)", "ruff (>=0.11.2,<0.12.0)"]
+deepspeed = ["deepspeed (<=0.14.0)"]
+dev = ["bitsandbytes", "black (>=23.1,<24.0)", "datasets", "diffusers", "evaluate", "hf-doc-builder (>=0.3.0)", "parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-subtests", "pytest-xdist", "rich", "ruff (>=0.2.1,<0.3.0)", "scikit-learn", "scipy", "timm", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
+quality = ["black (>=23.1,<24.0)", "hf-doc-builder (>=0.3.0)", "ruff (>=0.2.1,<0.3.0)"]
 rich = ["rich"]
 sagemaker = ["sagemaker"]
-test-dev = ["bitsandbytes", "datasets", "diffusers", "evaluate", "scikit-learn", "scipy", "timm", "torchdata (>=0.8.0)", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
-test-fp8 = ["torchao"]
-test-prod = ["parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-order", "pytest-subtests", "pytest-xdist"]
-test-trackers = ["comet-ml", "dvclive", "matplotlib", "mlflow", "swanlab", "tensorboard", "wandb"]
-testing = ["bitsandbytes", "datasets", "diffusers", "evaluate", "parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-order", "pytest-subtests", "pytest-xdist", "scikit-learn", "scipy", "timm", "torchdata (>=0.8.0)", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
+test-dev = ["bitsandbytes", "datasets", "diffusers", "evaluate", "scikit-learn", "scipy", "timm", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
+test-prod = ["parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-subtests", "pytest-xdist"]
+test-trackers = ["comet-ml", "dvclive", "tensorboard", "wandb"]
+testing = ["bitsandbytes", "datasets", "diffusers", "evaluate", "parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-subtests", "pytest-xdist", "scikit-learn", "scipy", "timm", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
 
 [[package]]
 name = "aiobotocore"
@@ -433,6 +432,26 @@ pylatexenc = ">=2.10"
 docs = ["sphinx"]
 lint = ["black (==23.3.0)", "docstr-coverage (==2.2.0)", "isort (==5.12.0)"]
 test = ["jupyter", "pytest", "pytest-cov", "pytest-xdist"]
+
+[[package]]
+name = "bitsandbytes"
+version = "0.43.3"
+description = "k-bit optimizers and matrix multiplication routines."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "bitsandbytes-0.43.3-py3-none-manylinux_2_24_x86_64.whl", hash = "sha256:cc99507c352be0715098b2c7577b690dd158972dc4ea10c7495bac104c7c79f0"},
+    {file = "bitsandbytes-0.43.3-py3-none-win_amd64.whl", hash = "sha256:257f6552f2144748a84e6c44e1f7a98f3da888f675ed74e18fd7f7eb13c6cafa"},
+]
+
+[package.dependencies]
+numpy = "*"
+torch = "*"
+
+[package.extras]
+benchmark = ["matplotlib", "pandas"]
+test = ["scipy"]
 
 [[package]]
 name = "blinker"
@@ -1223,6 +1242,23 @@ dev = ["coverage (==7.2.7)", "pytest (==7.4.2)", "pytest-cov (==4.1.0)", "pytest
 docs = ["myst-parser (==0.18.0)", "sphinx (==5.1.1)"]
 ssh = ["paramiko (>=2.4.3)"]
 websockets = ["websocket-client (>=1.3.0)"]
+
+[[package]]
+name = "docstring-parser"
+version = "0.18.0"
+description = "Parse Python docstrings in reST, Google and Numpydoc format"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "docstring_parser-0.18.0-py3-none-any.whl", hash = "sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b"},
+    {file = "docstring_parser-0.18.0.tar.gz", hash = "sha256:292510982205c12b1248696f44959db3cdd1740237a968ea1e2e7a900eeb2015"},
+]
+
+[package.extras]
+dev = ["pre-commit (>=2.16.0) ; python_version >= \"3.9\"", "pydoctor (>=25.4.0)", "pytest"]
+docs = ["pydoctor (>=25.4.0)"]
+test = ["pytest"]
 
 [[package]]
 name = "executing"
@@ -4285,6 +4321,36 @@ pox = ">=0.3.4"
 ppft = ">=1.7.6.8"
 
 [[package]]
+name = "peft"
+version = "0.12.0"
+description = "Parameter-Efficient Fine-Tuning (PEFT)"
+optional = false
+python-versions = ">=3.8.0"
+groups = ["main"]
+files = [
+    {file = "peft-0.12.0-py3-none-any.whl", hash = "sha256:a47915efb08af50e9fda267b7bf1b5b6eff33ccbb08791bdb544dccb8788f674"},
+    {file = "peft-0.12.0.tar.gz", hash = "sha256:253205bd478e985ccdc7f04804aab9c95f479130c517bf6e474b8d509db5f4a4"},
+]
+
+[package.dependencies]
+accelerate = ">=0.21.0"
+huggingface-hub = ">=0.17.0"
+numpy = ">=1.17"
+packaging = ">=20.0"
+psutil = "*"
+pyyaml = "*"
+safetensors = "*"
+torch = ">=1.13.0"
+tqdm = "*"
+transformers = "*"
+
+[package.extras]
+dev = ["black", "hf-doc-builder", "ruff (>=0.4.8,<0.5.0)"]
+docs-specific = ["black", "hf-doc-builder"]
+quality = ["black", "hf-doc-builder", "ruff (>=0.4.8,<0.5.0)"]
+test = ["black", "datasets", "diffusers (<0.21.0)", "hf-doc-builder", "parameterized", "pytest", "pytest-cov", "pytest-xdist", "ruff (>=0.4.8,<0.5.0)", "scipy"]
+
+[[package]]
 name = "pexpect"
 version = "4.9.0"
 description = "Pexpect allows easy control of interactive console applications."
@@ -5068,6 +5134,25 @@ files = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},
     {file = "pyparsing-2.4.7.tar.gz", hash = "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1"},
 ]
+
+[[package]]
+name = "pypdf"
+version = "4.3.1"
+description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "pypdf-4.3.1-py3-none-any.whl", hash = "sha256:64b31da97eda0771ef22edb1bfecd5deee4b72c3d1736b7df2689805076d6418"},
+    {file = "pypdf-4.3.1.tar.gz", hash = "sha256:b2f37fe9a3030aa97ca86067a56ba3f9d3565f9a791b305c7355d8392c30d91b"},
+]
+
+[package.extras]
+crypto = ["PyCryptodome ; python_version == \"3.6\"", "cryptography ; python_version >= \"3.7\""]
+dev = ["black", "flit", "pip-tools", "pre-commit (<2.18.0)", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
+docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
+full = ["Pillow (>=8.0.0)", "PyCryptodome ; python_version == \"3.6\"", "cryptography ; python_version >= \"3.7\""]
+image = ["Pillow (>=8.0.0)"]
 
 [[package]]
 name = "pysocks"
@@ -6291,6 +6376,21 @@ doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-
 test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "importlib-metadata", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21) ; python_version >= \"3.9\" and sys_platform != \"cygwin\"", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "mypy (==1.11.*)", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-home (>=0.5)", "pytest-mypy", "pytest-perf ; sys_platform != \"cygwin\"", "pytest-ruff (<0.4) ; platform_system == \"Windows\"", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\"", "pytest-ruff (>=0.3.2) ; sys_platform != \"cygwin\"", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
+name = "shtab"
+version = "1.8.1"
+description = "Automagic shell tab completion for Python CLI applications"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "shtab-1.8.1-py3-none-any.whl", hash = "sha256:4fc418e0173e66385e4605044a26a4910e73dde2dc23e809acc2f0275e842426"},
+    {file = "shtab-1.8.1.tar.gz", hash = "sha256:3edaf857ba164a0d7bb64e958eab8d6756d5aee3949c7f36a7e779bf1ce3b897"},
+]
+
+[package.extras]
+dev = ["pytest (>=6)", "pytest-cov", "pytest-timeout"]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -7104,6 +7204,56 @@ tests = ["autopep8", "flake8", "isort", "numpy", "pytest", "scipy (>=1.7.1)", "t
 tutorials = ["matplotlib", "pandas", "tabulate", "torch"]
 
 [[package]]
+name = "trl"
+version = "0.10.1"
+description = "Train transformer language models with reinforcement learning."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "trl-0.10.1-py3-none-any.whl", hash = "sha256:4e389c68c3a49e9a19d8517092b7895898af917f707690e5167713cdc893c1bd"},
+    {file = "trl-0.10.1.tar.gz", hash = "sha256:1662e57a95daeb45b30ceea9fa08999b0ceacdc25bdaf615f5fc2807155a7cc7"},
+]
+
+[package.dependencies]
+accelerate = "*"
+datasets = "*"
+numpy = ">=1.18.2"
+torch = ">=1.4.0"
+transformers = ">=4.31.0"
+tyro = ">=0.5.11"
+
+[package.extras]
+benchmark = ["deepspeed", "ghapi", "openrlbenchmark (==0.2.1a5)", "requests", "wandb"]
+deepspeed = ["deepspeed (>=0.14.4)"]
+dev = ["Pillow", "bitsandbytes (<=0.41.1)", "deepspeed", "deepspeed (>=0.14.4)", "diffusers (>=0.18.0)", "ghapi", "huggingface-hub (>=0.22.2)", "liger-kernel-nightly (==0.1.1.dev20240828063745)", "llm-blender (>=0.0.2)", "openai (>=1.23.2)", "openrlbenchmark (==0.2.1a5)", "parameterized", "peft (>=0.8.0)", "pytest", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "requests", "scikit-learn", "wandb"]
+diffusers = ["diffusers (>=0.18.0)"]
+liger = ["liger-kernel-nightly (==0.1.1.dev20240828063745)"]
+llm-judge = ["huggingface-hub (>=0.22.2)", "llm-blender (>=0.0.2)", "openai (>=1.23.2)"]
+peft = ["peft (>=0.8.0)"]
+quantization = ["bitsandbytes (<=0.41.1)"]
+test = ["Pillow", "llm-blender (>=0.0.2)", "parameterized", "peft (>=0.8.0)", "pytest", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "scikit-learn"]
+
+[[package]]
+name = "typeguard"
+version = "4.4.2"
+description = "Run-time type checker for Python"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "typeguard-4.4.2-py3-none-any.whl", hash = "sha256:77a78f11f09777aeae7fa08585f33b5f4ef0e7335af40005b0c422ed398ff48c"},
+    {file = "typeguard-4.4.2.tar.gz", hash = "sha256:a6f1065813e32ef365bc3b3f503af8a96f9dd4e0033a02c28c4a4983de8c6c49"},
+]
+
+[package.dependencies]
+typing_extensions = ">=4.10.0"
+
+[package.extras]
+doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme (>=1.3.0)"]
+test = ["coverage[toml] (>=7)", "mypy (>=1.2.0) ; platform_python_implementation != \"PyPy\"", "pytest (>=7)"]
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -7130,6 +7280,29 @@ files = [
 [package.dependencies]
 mypy-extensions = ">=0.3.0"
 typing-extensions = ">=3.7.4"
+
+[[package]]
+name = "tyro"
+version = "0.9.17"
+description = "CLI interfaces & config objects, from types"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "tyro-0.9.17-py3-none-any.whl", hash = "sha256:f601fcd27edc99bc10a03602a47930ce8906ed995179a98b689bc85db38bec40"},
+    {file = "tyro-0.9.17.tar.gz", hash = "sha256:4a43386c6f3c8a06ed40a2f290de22fa3306300c68599ce5d7bd6fd1ad13c35a"},
+]
+
+[package.dependencies]
+colorama = {version = ">=0.4.0", markers = "platform_system == \"Windows\""}
+docstring-parser = ">=0.15"
+rich = ">=11.1.0"
+shtab = ">=1.5.6"
+typeguard = ">=4.0.0"
+typing-extensions = {version = ">=4.9.0", markers = "python_version >= \"3.8\""}
+
+[package.extras]
+dev = ["attrs (>=21.4.0)", "coverage[toml] (>=6.5.0)", "eval-type-backport (>=0.1.3)", "flax (>=0.6.9) ; python_version >= \"3.8\" and python_version <= \"3.12\"", "ml-collections (>=0.1.0)", "mypy (>=1.4.1)", "numpy (>=1.20.0)", "omegaconf (>=2.2.2)", "pydantic (>=2.5.2,!=2.10.0)", "pyright (>=1.1.349,!=1.1.379)", "pytest (>=7.1.2)", "pytest-cov (>=3.0.0)", "pytest-xdist (>=3.5.0)", "pyyaml (>=6.0)", "ruff (>=0.1.13)", "torch (>=1.10.0) ; python_version <= \"3.12\""]
 
 [[package]]
 name = "tzdata"
@@ -7986,4 +8159,4 @@ test = ["big-O", "importlib-resources ; python_version < \"3.9\"", "jaraco.funct
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "fb365516beacc31c68d4512a2148db5f182dd41544bfbbb52c4424a22fe2a65d"
+content-hash = "0e2d6d76d5b7ec0ca60ef85f2ace59d251f90234a47371ac31037bb47a678f05"

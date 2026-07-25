@@ -127,6 +127,9 @@ celerybeat.pid
 data/evaluations/
 data/generated/
 data/mlruns/
+data/training/
+data/local_sources/
+data/local_sources_manifest.json
 .venv
 env/
 venv/

@@ -42,7 +42,11 @@ langchain-community = "^0.2.11"
 fastapi = ">=0.100,<=0.110"
 uvicorn = "^0.30.6"
 opik = "^0.2.2"
-accelerate = "^1.8.1"
+accelerate = "0.33.0"
+trl = "0.10.1"
+peft = "0.12.0"
+bitsandbytes = "0.43.3"
+pypdf = "4.3.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -109,8 +113,21 @@ local-generate-instruct-dataset = { cmd = "poetry run python -m tools.local gene
 local-generate-preference-dataset = { cmd = "poetry run python -m tools.local generate-dataset --dataset-type preference", env = { ENV_FILE = ".env.local" } }
 local-evaluate-rag = { cmd = "poetry run python -m tools.local evaluate-rag", env = { ENV_FILE = ".env.local" } }
 local-training-check = { cmd = "poetry run python -m tools.local training-check", env = { ENV_FILE = ".env.local" } }
+local-training-plan = { cmd = "poetry run python -m tools.local training-plan", env = { ENV_FILE = ".env.local" } }
+local-prepare-training-data = { cmd = "poetry run python -m tools.local prepare-training-data", env = { ENV_FILE = ".env.local" } }
+local-train-dry-run = { cmd = "poetry run python -m tools.local train --stage sft --dry-run", env = { ENV_FILE = ".env.local" } }
+local-train-sft = { cmd = "poetry run python -m tools.local train --stage sft", env = { ENV_FILE = ".env.local" } }
+local-infer-base = { cmd = "poetry run python -m tools.local infer --base-only", env = { ENV_FILE = ".env.local" } }
+local-infer-adapter = { cmd = "poetry run python -m tools.local infer", env = { ENV_FILE = ".env.local" } }
+local-compare-adapter = { cmd = "poetry run python -m tools.local compare-adapter", env = { ENV_FILE = ".env.local" } }
+local-compare-adapter-sft = { cmd = "poetry run python -m tools.local compare-adapter --prompts-file data/training/datasets/sft_train.jsonl --max-prompts 3", env = { ENV_FILE = ".env.local" } }
+local-import-sources = { cmd = "poetry run python -m tools.local import-sources --reset", env = { ENV_FILE = ".env.local" } }
+local-search-sources = { cmd = "poetry run python -m tools.local search-sources", env = { ENV_FILE = ".env.local" } }
+local-ask-sources = { cmd = "poetry run python -m tools.local ask-sources", env = { ENV_FILE = ".env.local" } }
+local-generate-thesis-dataset = { cmd = "poetry run python -m tools.local generate-thesis-dataset", env = { ENV_FILE = ".env.local" } }
 local-smoke-test = { cmd = "poetry run python -m tools.local smoke-test", env = { ENV_FILE = ".env.local" } }
 local-smoke-test-full = { cmd = "poetry run python -m tools.local smoke-test --full", env = { ENV_FILE = ".env.local" } }
+local-test = { cmd = "poetry run pytest tests/unit", env = { ENV_FILE = ".env.local" } }
 local-stack-up = "docker compose up -d"
 local-stack-down = "docker compose stop"
 local-docker-infrastructure-up = "docker compose up -d"
