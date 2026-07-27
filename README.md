@@ -191,6 +191,12 @@ poetry run poe local-import-sources
 poetry run poe local-ask-sources
 ```
 
+Run the tracked thesis RAG evaluation set:
+
+```bash
+poetry run poe local-evaluate-thesis-rag
+```
+
 One-off question with an optional retrieval hint:
 
 ```bash

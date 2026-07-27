@@ -258,6 +258,95 @@ def _word_overlap(answer: str, context: str) -> float:
     return round(len(answer_words & context_words) / len(answer_words), 4)
 
 
+def _load_jsonl(path: Path) -> list[dict[str, Any]]:
+    records = []
+    with path.open() as file:
+        for line_number, line in enumerate(file, start=1):
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            if not isinstance(record, dict):
+                raise ValueError(f"{path}:{line_number} must contain a JSON object.")
+            records.append(record)
+
+    return records
+
+
+def _normalize_eval_text(text: str) -> str:
+    return " ".join("".join(character.lower() if character.isalnum() else " " for character in text).split())
+
+
+EVAL_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "be",
+    "by",
+    "for",
+    "from",
+    "in",
+    "is",
+    "it",
+    "of",
+    "on",
+    "or",
+    "that",
+    "the",
+    "to",
+    "under",
+    "with",
+}
+
+
+def _stem_eval_token(token: str) -> str:
+    if len(token) > 5 and token.endswith("ing"):
+        return token[:-3]
+    if len(token) > 4 and token.endswith("ed"):
+        return token[:-2]
+    if len(token) > 3 and token.endswith("s"):
+        return token[:-1]
+
+    return token
+
+
+def _eval_tokens(text: str) -> set[str]:
+    return {
+        _stem_eval_token(token)
+        for token in _normalize_eval_text(text).split()
+        if token not in EVAL_STOPWORDS and (token.isdigit() or len(token) > 2)
+    }
+
+
+def _expected_point_covered(answer: str, expected_point: str) -> bool:
+    normalized_answer = _normalize_eval_text(answer)
+    normalized_point = _normalize_eval_text(expected_point)
+    if not normalized_point:
+        return False
+    if normalized_point in normalized_answer:
+        return True
+
+    point_tokens = _eval_tokens(expected_point)
+    if not point_tokens:
+        return False
+    answer_tokens = _eval_tokens(answer)
+
+    overlap = point_tokens & answer_tokens
+    return len(overlap) / len(point_tokens) >= 0.6
+
+
+def _score_expected_points(answer: str, expected_points: list[str]) -> dict[str, Any]:
+    covered = [point for point in expected_points if _expected_point_covered(answer, point)]
+    missing = [point for point in expected_points if point not in covered]
+
+    return {
+        "covered": covered,
+        "missing": missing,
+        "coverage": round(len(covered) / len(expected_points), 4) if expected_points else 0.0,
+    }
+
+
 def _assert_ok(results: list[CheckResult]) -> None:
     failed = [result for result in results if not result.ok]
     if failed:
@@ -1191,6 +1280,196 @@ Context:
     click.echo("\nSources:")
     for index, result in enumerate(results, start=1):
         click.echo(f"- [{index}] {result['source_name']} chunk={result['chunk_index']} score={result['score']:.4f}")
+
+
+@main.command("evaluate-thesis-rag")
+@click.option(
+    "--eval-file",
+    default=Path("data/evaluation/thesis_eval_questions.jsonl"),
+    type=click.Path(path_type=Path, exists=True, dir_okay=False, file_okay=True),
+    help="JSONL evaluation cases for the local thesis RAG system.",
+)
+@click.option("--limit", default=5, show_default=True, help="Number of local source chunks to retrieve per case.")
+@click.option("--max-cases", default=None, type=int, help="Maximum evaluation cases to run.")
+@click.option("--temperature", default=0.1, show_default=True, help="Local LLM temperature.")
+@click.option("--max-new-tokens", default=700, show_default=True, help="Maximum answer tokens to generate.")
+@click.option(
+    "--output-file",
+    default=None,
+    type=click.Path(path_type=Path, dir_okay=False, file_okay=True),
+    help="Output JSON report. Defaults to data/evaluations/local_thesis_rag_<timestamp>.json.",
+)
+def evaluate_thesis_rag_command(
+    eval_file: Path,
+    limit: int,
+    max_cases: int | None,
+    temperature: float,
+    max_new_tokens: int,
+    output_file: Path | None,
+) -> None:
+    from llm_engineering.application.llm import get_llm_provider
+    from llm_engineering.application.local_sources import search_local_sources
+
+    timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
+    output_file = output_file or Path("data/evaluations") / f"local_thesis_rag_{timestamp}.json"
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    cases = _load_jsonl(eval_file)
+    if max_cases is not None:
+        cases = cases[:max_cases]
+    if not cases:
+        raise click.ClickException(f"No evaluation cases found in {eval_file}.")
+
+    provider = get_llm_provider()
+    results = []
+    for case in cases:
+        question = case.get("question")
+        expected_points = case.get("expected_points", [])
+        if not isinstance(question, str) or not question.strip():
+            raise click.ClickException(f"Evaluation case {case.get('id', '<unknown>')} is missing a question.")
+        if not isinstance(expected_points, list) or not all(isinstance(point, str) for point in expected_points):
+            raise click.ClickException(
+                f"Evaluation case {case.get('id', question)} must define expected_points as a list of strings."
+            )
+
+        expected_source = case.get("expected_source")
+        retrieval_queries = [
+            question,
+            (
+                f"{question} Francisco Pinto thesis managerial adjustments workforce scheduling "
+                "optimizer-generated human-approved schedules research questions methodology results"
+            ),
+        ]
+        retrieval_queries.extend(query for query in case.get("retrieval_queries", []) if isinstance(query, str))
+        candidate_results = []
+        required_results = []
+        if isinstance(expected_source, str) and expected_source:
+            for chunk_index in case.get("required_chunk_indices", []):
+                if isinstance(chunk_index, int):
+                    required_results.extend(
+                        search_local_sources(
+                            query=question,
+                            limit=1,
+                            source_name=expected_source,
+                            chunk_index=chunk_index,
+                        )
+                    )
+        for query in retrieval_queries:
+            candidate_results.extend(search_local_sources(query=query, limit=limit))
+            if isinstance(expected_source, str) and expected_source:
+                candidate_results.extend(search_local_sources(query=query, limit=limit, source_name=expected_source))
+        required_sources = dedupe_chunks(required_results)
+        required_keys = {(source["source_path"], source["chunk_index"]) for source in required_sources}
+        ranked_candidates = [
+            source
+            for source in dedupe_chunks(sorted(candidate_results, key=lambda result: result["score"], reverse=True))
+            if (source["source_path"], source["chunk_index"]) not in required_keys
+        ]
+        sources = [*required_sources, *ranked_candidates][:limit]
+        if not sources:
+            raise click.ClickException("No local source results found. Run local-import-sources first.")
+
+        context = "\n\n".join(
+            f"[{index}] Source: {source['source_name']} | chunk={source['chunk_index']}\n{source['content'][:1800]}"
+            for index, source in enumerate(sources, start=1)
+        )
+        prompt = f"""
+You are answering an evaluation question about Francisco Pinto's thesis and supporting literature.
+Answer using only the context below. If the context is not enough, say what is missing.
+Prefer the thesis as the primary source when it appears in the context.
+Be concise, precise, and avoid inventing citations or results.
+
+Question:
+{question}
+
+Context:
+{context}
+"""
+        answer = provider.generate(
+            prompt,
+            temperature=temperature,
+            max_new_tokens=max_new_tokens,
+        )
+        expected_score = _score_expected_points(answer, expected_points)
+        source_match = (
+            any(source.get("source_name") == expected_source for source in sources)
+            if isinstance(expected_source, str) and expected_source
+            else None
+        )
+        results.append(
+            {
+                "id": case.get("id"),
+                "category": case.get("category"),
+                "question": question,
+                "answer": answer,
+                "expected_points": expected_points,
+                "expected_point_score": expected_score,
+                "context_overlap": _word_overlap(answer, context),
+                "expected_source": expected_source,
+                "expected_source_retrieved": source_match,
+                "sources": [
+                    {
+                        "source_name": source.get("source_name"),
+                        "chunk_index": source.get("chunk_index"),
+                        "score": source.get("score"),
+                    }
+                    for source in sources
+                ],
+            }
+        )
+        click.echo(
+            f"[OK] {case.get('id', question)}: "
+            f"expected-point coverage={expected_score['coverage']:.2f}, context-overlap={results[-1]['context_overlap']:.2f}"
+        )
+
+    source_matches = [
+        result["expected_source_retrieved"]
+        for result in results
+        if isinstance(result["expected_source_retrieved"], bool)
+    ]
+    aggregate = {
+        "num_cases": len(results),
+        "avg_expected_point_coverage": round(
+            sum(result["expected_point_score"]["coverage"] for result in results) / len(results),
+            4,
+        ),
+        "avg_context_overlap": round(sum(result["context_overlap"] for result in results) / len(results), 4),
+        "expected_source_retrieval_rate": round(sum(source_matches) / len(source_matches), 4)
+        if source_matches
+        else None,
+    }
+    payload = {
+        "model": settings.LOCAL_CHAT_MODEL,
+        "embedding_model": settings.TEXT_EMBEDDING_MODEL_ID,
+        "created_at": datetime.now(tz=UTC).isoformat(),
+        "eval_file": str(eval_file),
+        "aggregate": aggregate,
+        "results": results,
+    }
+    output_file.write_text(json.dumps(_json_safe(payload), indent=2))
+    click.echo(f"\nSaved local thesis RAG evaluation to {output_file}")
+    click.echo(f"Average expected-point coverage: {aggregate['avg_expected_point_coverage']:.2f}")
+
+    if settings.USE_MLFLOW:
+        try:
+            import mlflow
+
+            mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+            mlflow.set_experiment(settings.MLFLOW_EXPERIMENT_NAME)
+            with mlflow.start_run(run_name=f"local-thesis-rag-{timestamp}"):
+                mlflow.log_params(
+                    {
+                        "model": settings.LOCAL_CHAT_MODEL,
+                        "embedding_model": settings.TEXT_EMBEDDING_MODEL_ID,
+                        "eval_file": str(eval_file),
+                        "num_cases": len(results),
+                    }
+                )
+                mlflow.log_metrics({key: value for key, value in aggregate.items() if isinstance(value, int | float)})
+                mlflow.log_artifact(str(output_file))
+            logger.info("Logged local thesis RAG evaluation to MLflow.")
+        except Exception:
+            logger.exception("Failed to log local thesis RAG evaluation to MLflow.")
 
 
 @main.command("generate-thesis-dataset")

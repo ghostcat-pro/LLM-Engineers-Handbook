@@ -200,9 +200,14 @@ def search_local_sources(
     *,
     source_name: str | None = None,
     exclude_source_name: str | None = None,
+    chunk_index: int | None = None,
 ) -> list[dict[str, Any]]:
     embedding = EmbeddingModelSingleton()([query], to_list=True)[0]
-    query_filter = _build_source_filter(source_name=source_name, exclude_source_name=exclude_source_name)
+    query_filter = _build_source_filter(
+        source_name=source_name,
+        exclude_source_name=exclude_source_name,
+        chunk_index=chunk_index,
+    )
     try:
         records = connection.search(
             collection_name=LOCAL_SOURCE_COLLECTION,
@@ -218,11 +223,17 @@ def search_local_sources(
     return [{"score": record.score, **(record.payload or {})} for record in records]
 
 
-def _build_source_filter(source_name: str | None, exclude_source_name: str | None) -> Filter | None:
+def _build_source_filter(
+    source_name: str | None,
+    exclude_source_name: str | None,
+    chunk_index: int | None = None,
+) -> Filter | None:
     must = []
     must_not = []
     if source_name:
         must.append(FieldCondition(key="source_name", match=MatchValue(value=source_name)))
+    if chunk_index is not None:
+        must.append(FieldCondition(key="chunk_index", match=MatchValue(value=chunk_index)))
     if exclude_source_name:
         must_not.append(FieldCondition(key="source_name", match=MatchValue(value=exclude_source_name)))
 

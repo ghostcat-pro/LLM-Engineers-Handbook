@@ -80,6 +80,34 @@ ENV_FILE=.env.local poetry run python -m tools.local ask-sources \
   --retrieval-query "RQ1.1 taxonomy manual adjustments retail workforce scheduling"
 ```
 
+## Evaluate Thesis RAG
+
+Run the local thesis RAG evaluation set:
+
+```bash
+poetry run poe local-evaluate-thesis-rag
+```
+
+Purpose: asks a tracked set of thesis-specific questions, retrieves local source chunks, answers with the local Ollama model, and writes a JSON report under:
+
+```text
+data/evaluations/
+```
+
+The tracked evaluation set lives at:
+
+```text
+data/evaluation/thesis_eval_questions.jsonl
+```
+
+Each case includes expected answer points. The evaluator reports expected-point coverage, context overlap, retrieved sources, and aggregate scores. Treat the scores as a practical local regression signal, not as a perfect human-quality metric.
+
+Quick test with only a few cases:
+
+```bash
+ENV_FILE=.env.local poetry run python -m tools.local evaluate-thesis-rag --max-cases 3
+```
+
 ## Generate Thesis SFT Samples
 
 ```bash
@@ -160,8 +188,9 @@ Use those as an evaluation set, not necessarily as training data.
 1. Add your thesis PDF and 3-10 core article PDFs to `data/local_sources/`.
 2. Run `poetry run poe local-import-sources`.
 3. Run `poetry run poe local-search-sources`.
-4. Run `poetry run poe local-generate-thesis-dataset`.
-5. Inspect `data/generated/local_thesis_sft_dataset.jsonl`.
-6. Run `poetry run poe local-prepare-thesis-training-data`.
-7. Run `poetry run poe local-train-dry-run`.
-8. Train locally only after the dry run passes.
+4. Run `poetry run poe local-evaluate-thesis-rag` to capture the baseline RAG behavior.
+5. Run `poetry run poe local-generate-thesis-dataset`.
+6. Inspect `data/generated/local_thesis_sft_dataset.jsonl`.
+7. Run `poetry run poe local-prepare-thesis-training-data`.
+8. Run `poetry run poe local-train-dry-run`.
+9. Train locally only after the dry run passes.

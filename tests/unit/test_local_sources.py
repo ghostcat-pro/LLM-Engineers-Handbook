@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from llm_engineering.application.local_sources import (
+    _build_source_filter,
     chunk_text,
     extract_source_text,
     load_local_source_documents,
@@ -33,3 +34,16 @@ def test_load_local_source_documents_creates_missing_dir(tmp_path: Path) -> None
 
     assert load_local_source_documents(source_dir) == []
     assert source_dir.exists()
+
+
+def test_build_source_filter_can_target_chunk_index() -> None:
+    query_filter = _build_source_filter(
+        source_name="thesis.pdf",
+        exclude_source_name=None,
+        chunk_index=46,
+    )
+
+    assert query_filter is not None
+    assert len(query_filter.must) == 2
+    assert query_filter.must[0].key == "source_name"
+    assert query_filter.must[1].key == "chunk_index"

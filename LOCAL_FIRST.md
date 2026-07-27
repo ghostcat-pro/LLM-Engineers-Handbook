@@ -84,6 +84,14 @@ Test RAG:
 poetry run poe local-rag-test
 ```
 
+Evaluate the local thesis RAG baseline:
+
+```bash
+poetry run poe local-evaluate-thesis-rag
+```
+
+Reports are written under `data/evaluations/`. The tracked evaluation cases live in `data/evaluation/thesis_eval_questions.jsonl`.
+
 ## Local Dataset Generation
 
 Generate a small instruction dataset:
