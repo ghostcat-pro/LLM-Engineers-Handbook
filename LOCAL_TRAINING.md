@@ -73,6 +73,33 @@ Expected outputs:
 
 These files are ignored by git.
 
+## Prepare Thesis Training Data
+
+For the thesis/domain experiment, generate thesis-weighted samples first:
+
+```bash
+poetry run poe local-generate-thesis-dataset
+```
+
+Inspect the generated file:
+
+```text
+data/generated/local_thesis_sft_dataset.jsonl
+```
+
+Then prepare the trainer split:
+
+```bash
+poetry run poe local-prepare-thesis-training-data
+```
+
+Expected outputs:
+
+- `data/training/datasets/sft_train.jsonl`
+- `data/training/datasets/sft_test.jsonl`
+
+This command does not call external services. It reads the local JSONL, keeps valid `instruction`/`output` rows, preserves source metadata, and writes a deterministic train/eval split for the SFT trainer.
+
 ## Check Dependencies
 
 ```bash

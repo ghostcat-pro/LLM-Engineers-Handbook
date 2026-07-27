@@ -205,6 +205,13 @@ Generate a thesis-weighted local SFT dataset:
 poetry run poe local-generate-thesis-dataset
 ```
 
+Prepare that thesis/domain dataset for the local SFT trainer:
+
+```bash
+poetry run poe local-prepare-thesis-training-data
+poetry run poe local-train-dry-run
+```
+
 The default local outputs are intentionally ignored by git:
 
 ```text

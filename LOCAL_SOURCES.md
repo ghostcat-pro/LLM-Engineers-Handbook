@@ -119,6 +119,31 @@ data/generated/local_thesis_sft_dataset.jsonl
 
 This is synthetic training data. You should inspect it before mixing it into the SFT dataset.
 
+## Prepare Thesis SFT Training Files
+
+After inspecting the generated JSONL, convert it into the local trainer's expected split files:
+
+```bash
+poetry run poe local-prepare-thesis-training-data
+```
+
+Expected outputs:
+
+```text
+data/training/datasets/sft_train.jsonl
+data/training/datasets/sft_test.jsonl
+```
+
+The split is deterministic and local. By default, 10% of valid samples are reserved for evaluation while keeping at least one training sample.
+
+Custom split:
+
+```bash
+ENV_FILE=.env.local poetry run python -m tools.local prepare-thesis-training-data \
+  --input-file data/generated/local_thesis_sft_dataset.jsonl \
+  --test-size 0.2
+```
+
 ## Recommended Human Work
 
 You do not need to manually write hundreds of samples. But it is worth manually writing or reviewing:
@@ -137,4 +162,6 @@ Use those as an evaluation set, not necessarily as training data.
 3. Run `poetry run poe local-search-sources`.
 4. Run `poetry run poe local-generate-thesis-dataset`.
 5. Inspect `data/generated/local_thesis_sft_dataset.jsonl`.
-6. Only then merge selected samples into `data/training/datasets/sft_train.jsonl` and retrain.
+6. Run `poetry run poe local-prepare-thesis-training-data`.
+7. Run `poetry run poe local-train-dry-run`.
+8. Train locally only after the dry run passes.

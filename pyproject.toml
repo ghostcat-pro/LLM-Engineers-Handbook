@@ -125,6 +125,7 @@ local-import-sources = { cmd = "poetry run python -m tools.local import-sources 
 local-search-sources = { cmd = "poetry run python -m tools.local search-sources", env = { ENV_FILE = ".env.local" } }
 local-ask-sources = { cmd = "poetry run python -m tools.local ask-sources", env = { ENV_FILE = ".env.local" } }
 local-generate-thesis-dataset = { cmd = "poetry run python -m tools.local generate-thesis-dataset", env = { ENV_FILE = ".env.local" } }
+local-prepare-thesis-training-data = { cmd = "poetry run python -m tools.local prepare-thesis-training-data", env = { ENV_FILE = ".env.local" } }
 local-smoke-test = { cmd = "poetry run python -m tools.local smoke-test", env = { ENV_FILE = ".env.local" } }
 local-smoke-test-full = { cmd = "poetry run python -m tools.local smoke-test --full", env = { ENV_FILE = ".env.local" } }
 local-test = { cmd = "poetry run pytest tests/unit", env = { ENV_FILE = ".env.local" } }

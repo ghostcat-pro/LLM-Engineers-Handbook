@@ -7,7 +7,13 @@ from llm_engineering.model.finetuning.local import (
     _format_sft_prompt,
     check_local_training_readiness,
 )
-from tools.local import _flatten_dataset_samples, _write_jsonl
+from tools.local import (
+    _flatten_dataset_samples,
+    _load_sft_samples_from_jsonl,
+    _split_train_eval,
+    _write_jsonl,
+    prepare_thesis_training_data_command,
+)
 
 
 def test_flatten_dataset_samples_collects_split_samples() -> None:
@@ -42,6 +48,83 @@ def test_write_jsonl_handles_empty_and_non_empty_records(tmp_path: Path) -> None
 
     assert populated.read_text().splitlines() == ['{"a": 1}', '{"b": 2}']
     assert empty.read_text() == ""
+
+
+def test_load_sft_samples_from_jsonl_keeps_valid_local_metadata(tmp_path: Path) -> None:
+    path = tmp_path / "thesis.jsonl"
+    _write_jsonl(
+        path,
+        [
+            {
+                "instruction": " What is the thesis about? ",
+                "output": " Managerial adjustments. ",
+                "source_name": "thesis.pdf",
+                "source_path": "data/local_sources/thesis.pdf",
+                "chunk_index": 3,
+            },
+            {"instruction": "ignored"},
+            {"instruction": "", "output": "ignored"},
+        ],
+    )
+
+    assert _load_sft_samples_from_jsonl(path) == [
+        {
+            "instruction": "What is the thesis about?",
+            "output": "Managerial adjustments.",
+            "source_name": "thesis.pdf",
+            "source_path": "data/local_sources/thesis.pdf",
+            "chunk_index": 3,
+        }
+    ]
+
+
+def test_split_train_eval_is_deterministic_and_keeps_train_sample() -> None:
+    samples = [{"instruction": str(index), "output": str(index)} for index in range(10)]
+
+    train_samples, eval_samples = _split_train_eval(samples, test_size=0.2)
+
+    assert train_samples == samples[:8]
+    assert eval_samples == samples[8:]
+
+
+def test_split_train_eval_handles_single_sample() -> None:
+    samples = [{"instruction": "a", "output": "b"}]
+
+    assert _split_train_eval(samples, test_size=0.1) == (samples, [])
+
+
+def test_prepare_thesis_training_data_command_writes_sft_split(tmp_path: Path) -> None:
+    from click.testing import CliRunner
+
+    input_file = tmp_path / "local_thesis_sft_dataset.jsonl"
+    output_dir = tmp_path / "datasets"
+    _write_jsonl(
+        input_file,
+        [
+            {"instruction": "a", "output": "b"},
+            {"instruction": "c", "output": "d"},
+            {"instruction": "e", "output": "f"},
+        ],
+    )
+
+    result = CliRunner().invoke(
+        prepare_thesis_training_data_command,
+        [
+            "--input-file",
+            str(input_file),
+            "--output-dir",
+            str(output_dir),
+            "--test-size",
+            "0.34",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert (output_dir / "sft_train.jsonl").read_text().splitlines() == [
+        '{"instruction": "a", "output": "b"}',
+        '{"instruction": "c", "output": "d"}',
+    ]
+    assert (output_dir / "sft_test.jsonl").read_text().splitlines() == ['{"instruction": "e", "output": "f"}']
 
 
 def test_local_training_readiness_accepts_local_model_and_data(monkeypatch, tmp_path: Path) -> None:
